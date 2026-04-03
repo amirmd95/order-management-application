@@ -37,7 +37,7 @@ order-service     -> PostgreSQL
 mvn clean verify
 ```
 
-### 2. Run the Angular frontend
+### 2. Run the Angular frontend locally
 
 Angular `21.1.x` officially supports Node `20.19+`, `22.12+`, or `24+`. The frontend is configured to proxy API calls to the local microservices.
 
@@ -49,13 +49,30 @@ npm start
 
 The Angular dev server runs on `http://localhost:4200`.
 
-### 3. Run with Docker Compose
+### 3. Run the full stack with Docker Compose
 
 ```bash
 docker compose up --build
 ```
 
-This starts all three services and three PostgreSQL databases.
+This starts:
+
+- the Angular frontend on `http://localhost:4200`
+- `product-service` on `http://localhost:8081`
+- `inventory-service` on `http://localhost:8082`
+- `order-service` on `http://localhost:8083`
+- three PostgreSQL databases
+
+The frontend uses a Node `24` container and keeps `node_modules` in a Docker volume so host and container binaries do not get mixed.
+
+### 4. Open the repo in a devcontainer
+
+This repository includes a VS Code/Cursor devcontainer at [.devcontainer/devcontainer.json](/Users/mdamiralamansari/Documents/New%20project/.devcontainer/devcontainer.json).
+
+- Open the repository in a devcontainer.
+- The workspace attaches to the `frontend` service.
+- The backend services and databases come up from the same `docker-compose.yml`.
+- The first attach runs `cd frontend && npm install`.
 
 ## Example API Flow
 
