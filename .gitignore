@@ -1,0 +1,15 @@
+.idea/
+.vscode/
+*.iml
+
+target/
+.mvn/
+.m2/
+mvnw
+mvnw.cmd
+
+.DS_Store
+*.log
+*.pid
+
+.env
