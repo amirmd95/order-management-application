@@ -2,4 +2,8 @@
 .idea
 .vscode
 **/target
+.m2
+frontend/node_modules
+frontend/dist
+frontend/.angular
 README.md
