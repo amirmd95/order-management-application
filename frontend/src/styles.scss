@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+:root {
+  --ink-900: #132a29;
+  --ink-700: #30524f;
+  --ink-600: #54706c;
+  --ink-500: #6e8581;
+  --cream-50: #fffef8;
+  --cream-100: #f5f0e7;
+  --teal-700: #0d5f4d;
+  --teal-600: #117e66;
+  --coral-700: #a44a22;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Space Grotesk', 'Avenir Next', 'Trebuchet MS', sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(242, 133, 78, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(17, 126, 102, 0.18), transparent 24%),
+    linear-gradient(180deg, var(--cream-50), var(--cream-100));
+}

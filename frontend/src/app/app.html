@@ -1,0 +1,251 @@
+<div class="shell">
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Angular operations desk</p>
+      <h1>Order Management Application</h1>
+      <p class="hero-copy">
+        Coordinate catalog setup, stock readiness, and order placement from one frontend that
+        talks to the product, inventory, and order microservices.
+      </p>
+    </div>
+
+    <div class="hero-actions">
+      <button type="button" class="ghost-button" (click)="refreshDashboard()" [disabled]="isRefreshing()">
+        {{ isRefreshing() ? 'Refreshing...' : 'Refresh data' }}
+      </button>
+      <p class="hero-note">Angular {{ angularVersion }} with proxy routes for local microservice dev.</p>
+    </div>
+  </header>
+
+  @if (notice(); as activeNotice) {
+    <section class="notice" [class.notice-success]="activeNotice.type === 'success'">
+      <strong>{{ activeNotice.type === 'success' ? 'Saved' : 'Attention' }}</strong>
+      <span>{{ activeNotice.message }}</span>
+    </section>
+  }
+
+  <section class="stats-grid">
+    @for (card of summaryCards(); track card.label) {
+      <article class="stat-card">
+        <p class="stat-label">{{ card.label }}</p>
+        <h2>{{ card.value }}</h2>
+        <p class="stat-hint">{{ card.hint }}</p>
+      </article>
+    }
+  </section>
+
+  <main class="layout">
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">Catalog</p>
+          <h3>Create products</h3>
+        </div>
+        <span class="chip">{{ products().length }} products</span>
+      </div>
+
+      <form class="stack" [formGroup]="productForm" (ngSubmit)="submitProduct()">
+        <div class="form-grid two-up">
+          <label>
+            <span>SKU</span>
+            <input type="text" formControlName="sku" placeholder="SKU-1001" />
+          </label>
+          <label>
+            <span>Name</span>
+            <input type="text" formControlName="name" placeholder="Laptop Stand" />
+          </label>
+        </div>
+
+        <label>
+          <span>Description</span>
+          <textarea rows="3" formControlName="description" placeholder="Describe the item for sales and ops."></textarea>
+        </label>
+
+        <div class="form-grid three-up">
+          <label>
+            <span>Price</span>
+            <input type="number" min="0.01" step="0.01" formControlName="price" />
+          </label>
+          <label>
+            <span>Currency</span>
+            <input type="text" maxlength="3" formControlName="currency" />
+          </label>
+          <label class="toggle-field">
+            <span>Active</span>
+            <input type="checkbox" formControlName="active" />
+          </label>
+        </div>
+
+        <button type="submit" class="primary-button" [disabled]="productForm.invalid || isRefreshing()">
+          Add product
+        </button>
+      </form>
+
+      <div class="catalog-grid">
+        @for (product of products(); track product.sku) {
+          <article class="product-card">
+            <div class="product-topline">
+              <span class="badge">{{ product.sku }}</span>
+              <span class="status-pill" [class.status-live]="product.active">
+                {{ product.active ? 'Active' : 'Paused' }}
+              </span>
+            </div>
+
+            <h4>{{ product.name }}</h4>
+            <p>{{ product.description }}</p>
+
+            <div class="product-meta">
+              <strong>{{ formatMoney(product.price, product.currency) }}</strong>
+              @if (inventoryBySku()[product.sku]; as stock) {
+                <span>{{ stock.availableQuantity - stock.reservedQuantity }} sellable</span>
+              } @else {
+                <span>Inventory not seeded</span>
+              }
+            </div>
+
+            <div class="product-actions">
+              <button type="button" class="secondary-button" (click)="prepareInventory(product.sku)">
+                Update stock
+              </button>
+              <button type="button" class="secondary-button" (click)="appendProductToOrder(product.sku)">
+                Add to order
+              </button>
+            </div>
+          </article>
+        } @empty {
+          <p class="empty-state">Create your first product to start driving inventory and orders.</p>
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">Inventory</p>
+          <h3>Stock readiness</h3>
+        </div>
+        <span class="chip">{{ stockedSkuCount() }} stocked SKUs</span>
+      </div>
+
+      <form class="stack" [formGroup]="stockForm" (ngSubmit)="submitInventory()">
+        <div class="form-grid two-up">
+          <label>
+            <span>SKU</span>
+            <input type="text" formControlName="sku" placeholder="Pick a product SKU" />
+          </label>
+          <label>
+            <span>Available quantity</span>
+            <input type="number" min="0" step="1" formControlName="quantity" />
+          </label>
+        </div>
+
+        <button type="submit" class="primary-button" [disabled]="stockForm.invalid || isRefreshing()">
+          Save inventory snapshot
+        </button>
+      </form>
+
+      <div class="inventory-list">
+        @for (row of inventoryRows(); track row.sku) {
+          <article class="inventory-row">
+            <div>
+              <p class="inventory-sku">{{ row.sku }}</p>
+              <h4>{{ row.name }}</h4>
+            </div>
+
+            <div class="inventory-metrics">
+              <span>{{ row.available }} available</span>
+              <span>{{ row.reserved }} reserved</span>
+              <strong>{{ row.sellable }} sellable</strong>
+            </div>
+          </article>
+        } @empty {
+          <p class="empty-state">Inventory summaries will appear as soon as products are loaded.</p>
+        }
+      </div>
+    </section>
+
+    <section class="panel panel-wide">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">Orders</p>
+          <h3>Compose a live order</h3>
+        </div>
+        <span class="chip">{{ orders().length }} orders recorded</span>
+      </div>
+
+      <form class="stack" [formGroup]="orderForm" (ngSubmit)="submitOrder()">
+        <div class="form-grid two-up">
+          <label>
+            <span>Customer email</span>
+            <input type="email" formControlName="customerEmail" placeholder="buyer@example.com" />
+          </label>
+          <label>
+            <span>Currency</span>
+            <input type="text" maxlength="3" formControlName="currency" />
+          </label>
+        </div>
+
+        <div class="order-lines" formArrayName="items">
+          @for (itemGroup of orderItemControls(); track $index) {
+            <div class="order-line" [formGroupName]="$index">
+              <label>
+                <span>SKU</span>
+                <select formControlName="sku">
+                  <option value="">Select a product</option>
+                  @for (product of orderableProducts(); track product.sku) {
+                    <option [value]="product.sku">{{ product.sku }} · {{ product.name }}</option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                <span>Quantity</span>
+                <input type="number" min="1" step="1" formControlName="quantity" />
+              </label>
+
+              <button
+                type="button"
+                class="line-button"
+                (click)="removeOrderItem($index)"
+                [disabled]="orderItemControls().length === 1"
+              >
+                Remove
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="order-actions">
+          <button type="button" class="secondary-button" (click)="addOrderItem()">Add line</button>
+          <button type="submit" class="primary-button" [disabled]="orderForm.invalid || isRefreshing()">
+            Place order
+          </button>
+        </div>
+      </form>
+
+      <div class="orders-grid">
+        @for (order of latestOrders(); track order.id) {
+          <article class="order-card">
+            <div class="product-topline">
+              <span class="badge">{{ order.orderNumber }}</span>
+              <span class="status-pill status-live">{{ order.status }}</span>
+            </div>
+            <h4>{{ order.customerEmail }}</h4>
+            <p>{{ order.createdAt | date: 'medium' }}</p>
+            <strong>{{ formatMoney(order.totalAmount, order.currency) }}</strong>
+            <ul>
+              @for (item of order.items; track item.sku) {
+                <li>{{ item.quantity }} × {{ item.productName }}</li>
+              }
+            </ul>
+          </article>
+        } @empty {
+          <p class="empty-state">Confirmed orders will land here after the first checkout.</p>
+        }
+      </div>
+    </section>
+  </main>
+</div>

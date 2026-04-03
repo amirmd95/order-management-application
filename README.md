@@ -37,7 +37,19 @@ order-service     -> PostgreSQL
 mvn clean verify
 ```
 
-### 2. Run with Docker Compose
+### 2. Run the Angular frontend
+
+Angular `21.1.x` officially supports Node `20.19+`, `22.12+`, or `24+`. The frontend is configured to proxy API calls to the local microservices.
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+The Angular dev server runs on `http://localhost:4200`.
+
+### 3. Run with Docker Compose
 
 ```bash
 docker compose up --build
